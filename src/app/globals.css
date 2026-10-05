@@ -71,7 +71,10 @@ summary:focus-visible {
   padding: 0 8px;
 }
 .launch-nav {
-  background: #1e1e21;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--card);
   border-bottom: 1px solid #333336;
 }
 .nav-inner {
@@ -98,7 +101,7 @@ summary:focus-visible {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 8px;
   flex: 1;
 }
 .nav-links a {
@@ -107,14 +110,14 @@ summary:focus-visible {
   align-items: center;
   color: #a1a1aa;
   white-space: nowrap;
-  padding: 5px 10px;
+  padding: 4px 12px;
+  font-weight: 500;
   border-radius: 4px;
 }
 .nav-links a:hover {
   color: #fafafa;
 }
 .nav-links a.active {
-  background: #5c02e4;
   color: white;
 }
 .nav-badged b {
@@ -690,6 +693,10 @@ summary:focus-visible {
 }
 .wallet-gate {
   margin-top: 108px;
+}
+.wallet-gate.compact {
+  margin: 24px 0;
+  text-align: center;
 }
 .gate-icon {
   display: grid;
