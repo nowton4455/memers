@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import ImageUpload from "@/components/ImageUpload";
 import { createToken, TokenConfig } from "@/lib/token";
+import { assertNoPending, PendingTransaction } from "@/lib/transaction";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
 type Result = { mint: string; signature: string } | null;
@@ -33,6 +34,7 @@ export default function Home() {
   const { connection } = useConnection();
   const { publicKey, signTransaction, connected } = useWallet();
   const { setVisible: setWalletVisible } = useWalletModal();
+  const [storageError, setStorageError] = useState("");
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -82,9 +84,18 @@ export default function Home() {
     } catch {}
     sessionStorage.removeItem("memers-copy-v1");
   }, []);
+  useEffect(() => {
+    const confirmed = (event: Event) => {
+      const pending = (event as CustomEvent<PendingTransaction>).detail;
+      if (pending.label === "Create token" && pending.wallet === publicKey?.toBase58() && pending.endpoint === connection.rpcEndpoint && pending.details?.mint)
+        setResult({ mint: pending.details.mint, signature: pending.signature });
+    };
+    window.addEventListener("memers-confirmed", confirmed);
+    return () => window.removeEventListener("memers-confirmed", confirmed);
+  }, [publicKey, connection]);
   const canNext = useMemo(() => {
     if (step === 1)
-      return Boolean(form.name.trim() && form.symbol.trim() && form.image);
+      return Boolean(form.name.trim() && form.symbol.trim() && form.image && new TextEncoder().encode(form.name.trim()).length <= 32 && new TextEncoder().encode(form.symbol.trim()).length <= 10);
     if (step === 2)
       return (
         Number.isSafeInteger(form.supply) &&
@@ -110,6 +121,11 @@ export default function Home() {
     }
     setLoading(true);
     try {
+      assertNoPending(connection, publicKey);
+      const readiness = await fetch("/api/health", { cache: "no-store" });
+      const status = await readiness.json();
+      if (!readiness.ok || !status.ready) { setStorageError(status.message || "Token storage is unavailable."); throw new Error(status.message || "Token storage is unavailable."); }
+      setStorageError("");
       let image = form.image;
       if (imageFile) {
         const data = new FormData();
@@ -127,6 +143,7 @@ export default function Home() {
       const finalForm: TokenConfig = {
         ...form,
         image,
+        name: form.name.trim(), symbol: form.symbol.trim(),
         creatorName: modifyCreator ? creatorName.trim() : "",
         creatorWebsite: modifyCreator ? creatorWebsite.trim() : "",
       };
@@ -152,6 +169,7 @@ export default function Home() {
   if (result) {
     return (
       <section className="launch-shell">
+        {storageError && <p className="pools-error" role="alert">{storageError}</p>}
         <div className="success-card">
           <div className="success-icon">
             <Check />
@@ -167,9 +185,7 @@ export default function Home() {
             <code>{result.mint}</code>
             <button
               onClick={() => {
-                navigator.clipboard.writeText(result.mint);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 1500);
+                navigator.clipboard.writeText(result.mint).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => toast.error("Copy unavailable. Select the mint address to copy it."));
               }}
             >
               {copied ? <Check size={16} /> : <Copy size={16} />}{" "}
@@ -178,12 +194,13 @@ export default function Home() {
           </div>
           <div className="success-actions">
             <a
-              href={"https://solscan.io/token/" + result.mint}
+              href={"https://solscan.io/token/" + result.mint + (process.env.NEXT_PUBLIC_SOLANA_NETWORK === "devnet" ? "?cluster=devnet" : "")}
               target="_blank"
               rel="noreferrer"
             >
               View on Solscan <ExternalLink size={16} />
             </a>
+            <a href={"/liquidity?mint=" + result.mint}>Create liquidity pool <ArrowRight size={16}/></a>
             <button
               onClick={() => {
                 setResult(null);
@@ -213,6 +230,7 @@ export default function Home() {
   return (
     <>
       <section className="launch-shell">
+        {storageError && <p className="pools-error" role="alert">{storageError}</p>}
         <div className="launch-hero">
           <h1>Launch Your Own Coin FAST ⚡</h1>
           <p>Launch your own token on Solana in seconds. No coding required.</p>
@@ -478,7 +496,7 @@ export default function Home() {
             ],
             [
               "How does liquidity management work on our platform?",
-              "Select Raydium or Meteora to view wallet tokens. Pool creation requires a separate DEX transaction and deposits of both assets.",
+              "Select Raydium or Meteora to view wallet tokens. Create a token/SOL pool from your wallet, then add or remove liquidity from supported Raydium CPMM and Meteora DAMM V2 positions. Both assets and network fees are required.",
             ],
             [
               "What is Solana, and why should I launch my token on it?",

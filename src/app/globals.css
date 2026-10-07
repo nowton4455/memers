@@ -1072,3 +1072,10 @@ summary:focus-visible {
     transition: none !important;
   }
 }
+
+.transaction-notice { max-width: 900px; margin: 20px auto; padding: 18px 24px; border: 1px solid #a58aff; border-radius: 12px; background: #19122c; color: #fff; }
+.transaction-notice p { font-size: 13px; color: #b6b3c2; margin: 8px 0; }
+.transaction-notice a, .transaction-notice button { display: inline-block; margin-right: 16px; color: #bc9fff; padding: 8px 0; }
+.pool-details label { display: block; margin: 16px 0 8px; }
+.pool-details .field { width: 100%; }
+.primary-action:disabled { opacity: .5; cursor: not-allowed; }

@@ -1,3 +1,5 @@
+import { Buffer } from "buffer";
+import { submitTransaction, assertNoPending } from "./transaction";
 import {
   Connection,
   PublicKey,
@@ -163,7 +165,7 @@ function createMetadataInstruction(
   });
 }
 
-function buildMetadataJson(config: TokenConfig, baseUrl: string): object {
+function buildMetadataJson(config: TokenConfig, baseUrl: string, creatorWallet: string): object {
   const metadata: Record<string, unknown> = {
     name: config.name,
     symbol: config.symbol,
@@ -194,7 +196,7 @@ function buildMetadataJson(config: TokenConfig, baseUrl: string): object {
     metadata.creator = {
       name: config.creatorName || "",
       website: config.creatorWebsite || "",
-      wallet: "",
+      wallet: creatorWallet,
     };
   }
 
@@ -230,10 +232,11 @@ export async function createToken(
     throw new Error("Token name or symbol is too long.");
   if (!/^https?:\/\//.test(config.image))
     throw new Error("Upload a token image before creating the token.");
+  assertNoPending(connection, payer);
   const mintKeypair = Keypair.generate();
   const mint = mintKeypair.publicKey;
 
-  const metadataJson = buildMetadataJson(config, baseUrl);
+  const metadataJson = buildMetadataJson(config, baseUrl, payer.toBase58());
   const metadataRes = await fetch("/api/metadata", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -354,22 +357,7 @@ async function createStandardToken(
     );
   }
 
-  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-  tx.recentBlockhash = blockhash;
-  tx.feePayer = payer;
-  tx.partialSign(mintKeypair);
-
-  const signedTx = await signTransaction(tx);
-  const signature = await connection.sendRawTransaction(signedTx.serialize(), {
-    skipPreflight: false,
-    preflightCommitment: "confirmed",
-    maxRetries: 3,
-  });
-  const confirmation = await connection.confirmTransaction(
-    { signature, blockhash, lastValidBlockHeight },
-    "confirmed",
-  );
-  if (confirmation.value.err) throw new Error("Token transaction failed on-chain.");
+  const signature = await submitTransaction(connection, payer, tx, signTransaction, "Create token", [mintKeypair], { mint: mint.toBase58(), tokenAccount: ata.toBase58(), metadataUri });
 
   return {
     mint: mint.toBase58(),
@@ -512,17 +500,7 @@ async function createTaxToken(
     );
   }
 
-  const { blockhash } = await connection.getLatestBlockhash();
-  tx.recentBlockhash = blockhash;
-  tx.feePayer = payer;
-  tx.partialSign(mintKeypair);
-
-  const signedTx = await signTransaction(tx);
-  const signature = await connection.sendRawTransaction(signedTx.serialize(), {
-    skipPreflight: false,
-    preflightCommitment: "confirmed",
-  });
-  await connection.confirmTransaction(signature, "confirmed");
+  const signature = await submitTransaction(connection, payer, tx, signTransaction, "Create token", [mintKeypair], { mint: mint.toBase58(), tokenAccount: ata.toBase58(), metadataUri });
 
   return {
     mint: mint.toBase58(),
@@ -655,7 +633,9 @@ export async function updateTokenMetadata(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ metadata: metadataJson, mint: mintAddress }),
   });
-  const { uri: metadataUri } = await metadataRes.json();
+  const uploaded = await metadataRes.json();
+  if (!metadataRes.ok || typeof uploaded.uri !== "string") throw new Error(uploaded.error || "Metadata upload failed. No transaction was sent.");
+  const metadataUri = uploaded.uri;
 
   const tx = new Transaction();
 
@@ -707,16 +687,7 @@ export async function updateTokenMetadata(
     );
   }
 
-  const { blockhash } = await connection.getLatestBlockhash();
-  tx.recentBlockhash = blockhash;
-  tx.feePayer = payer;
-
-  const signedTx = await signTransaction(tx);
-  const signature = await connection.sendRawTransaction(signedTx.serialize(), {
-    skipPreflight: false,
-    preflightCommitment: "confirmed",
-  });
-  await connection.confirmTransaction(signature, "confirmed");
+  const signature = await submitTransaction(connection, payer, tx, signTransaction, "Token management");
 
   return signature;
 }
@@ -802,16 +773,7 @@ export async function harvestWithheldTokensToMint(
     ),
   );
 
-  const { blockhash } = await connection.getLatestBlockhash();
-  tx.recentBlockhash = blockhash;
-  tx.feePayer = payer;
-
-  const signedTx = await signTransaction(tx);
-  const signature = await connection.sendRawTransaction(signedTx.serialize(), {
-    skipPreflight: false,
-    preflightCommitment: "confirmed",
-  });
-  await connection.confirmTransaction(signature, "confirmed");
+  const signature = await submitTransaction(connection, payer, tx, signTransaction, "Token management");
 
   return signature;
 }
@@ -867,19 +829,7 @@ export async function withdrawWithheldTokensFromMint(
         ),
       );
 
-      const { blockhash } = await connection.getLatestBlockhash();
-      tx.recentBlockhash = blockhash;
-      tx.feePayer = payer;
-
-      const signedTx = await signTransaction(tx);
-      const signature = await connection.sendRawTransaction(
-        signedTx.serialize(),
-        {
-          skipPreflight: false,
-          preflightCommitment: "confirmed",
-        },
-      );
-      await connection.confirmTransaction(signature, "confirmed");
+      const signature = await submitTransaction(connection, payer, tx, signTransaction, "Token management");
       return signature;
     } catch {
       // Fall through to direct withdraw
@@ -896,16 +846,7 @@ export async function withdrawWithheldTokensFromMint(
     ),
   );
 
-  const { blockhash } = await connection.getLatestBlockhash();
-  tx.recentBlockhash = blockhash;
-  tx.feePayer = payer;
-
-  const signedTx = await signTransaction(tx);
-  const signature = await connection.sendRawTransaction(signedTx.serialize(), {
-    skipPreflight: false,
-    preflightCommitment: "confirmed",
-  });
-  await connection.confirmTransaction(signature, "confirmed");
+  const signature = await submitTransaction(connection, payer, tx, signTransaction, "Token management");
 
   return signature;
 }
@@ -963,16 +904,7 @@ export async function withdrawWithheldTokensFromAccounts(
     ),
   );
 
-  const { blockhash } = await connection.getLatestBlockhash();
-  tx.recentBlockhash = blockhash;
-  tx.feePayer = payer;
-
-  const signedTx = await signTransaction(tx);
-  const signature = await connection.sendRawTransaction(signedTx.serialize(), {
-    skipPreflight: false,
-    preflightCommitment: "confirmed",
-  });
-  await connection.confirmTransaction(signature, "confirmed");
+  const signature = await submitTransaction(connection, payer, tx, signTransaction, "Token management");
 
   return signature;
 }

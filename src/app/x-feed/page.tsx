@@ -34,7 +34,7 @@ export default function Tracker() {
     }finally{setLoading(false);}
   };
 
-  useEffect(()=>{void load();},[]);
+  useEffect(()=>{void load(); const timer = window.setInterval(() => { if (document.visibilityState === "visible") void load(); }, 60000); return () => window.clearInterval(timer);},[]);
 
   const copy=(coin:Coin)=>{
     sessionStorage.setItem("memers-copy-v1",JSON.stringify(coin));

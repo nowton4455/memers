@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Toaster } from "react-hot-toast";
 import WalletProvider from "@/contexts/WalletProvider";
+import PendingTransactions from "@/components/PendingTransactions";
 import Navbar from "@/components/Navbar";
 import "./globals.css";
 
@@ -25,6 +26,7 @@ export default function RootLayout({
         <div className="app-background" aria-hidden="true" />
         <WalletProvider>
           <Navbar />
+          <PendingTransactions />
           <main className="site-main">{children}</main>
           <footer className="site-footer">
             <div className="footer-inner">

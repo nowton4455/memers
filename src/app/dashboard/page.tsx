@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import {
@@ -42,6 +42,9 @@ import {
   Sparkles,
   Layers,
 } from "lucide-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { parseAmount, formatAmount } from "@/lib/amount";
+import { submitTransaction } from "@/lib/transaction";
 import ImageUpload from "@/components/ImageUpload";
 import {
   updateTokenMetadata,
@@ -65,10 +68,14 @@ interface TokenInfo {
 export default function Dashboard() {
   const { connection } = useConnection();
   const { publicKey, signTransaction, connected } = useWallet();
+  const { setVisible } = useWalletModal();
+  useEffect(() => { const mint = new URLSearchParams(window.location.search).get("mint"); if(mint) setMintAddress(mint); }, []);
   const [mintAddress, setMintAddress] = useState("");
   const [tokenInfo, setTokenInfo] = useState<TokenInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState("");
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [copied, setCopied] = useState("");
 
   const [mintAmount, setMintAmount] = useState("");
@@ -92,9 +99,7 @@ export default function Dashboard() {
     setMetaForm((prev) => ({ ...prev, [key]: value }));
 
   const copyText = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(label);
-    setTimeout(() => setCopied(""), 2000);
+    navigator.clipboard.writeText(text).then(() => { setCopied(label); setTimeout(() => setCopied(""), 2000); }).catch(() => toast.error("Copy unavailable. Select the address to copy it."));
   };
 
   const loadToken = useCallback(async () => {
@@ -123,7 +128,7 @@ export default function Dashboard() {
       let balance = "0";
       try {
         const account = await getAccount(connection, ata, "confirmed", programId);
-        balance = (Number(account.amount) / 10 ** mintData.decimals).toLocaleString();
+        balance = formatAmount(account.amount, mintData.decimals);
       } catch {
         // ATA doesn't exist yet
       }
@@ -131,7 +136,7 @@ export default function Dashboard() {
       setTokenInfo({
         address: mint.toBase58(),
         decimals: mintData.decimals,
-        supply: (Number(mintData.supply) / 10 ** mintData.decimals).toLocaleString(),
+        supply: formatAmount(mintData.supply, mintData.decimals),
         mintAuthority: mintData.mintAuthority?.toBase58() || null,
         freezeAuthority: mintData.freezeAuthority?.toBase58() || null,
         isToken2022,
@@ -151,15 +156,7 @@ export default function Dashboard() {
     setActionLoading(action);
     try {
       const tx = await buildTx();
-      const { blockhash } = await connection.getLatestBlockhash();
-      tx.recentBlockhash = blockhash;
-      tx.feePayer = publicKey;
-      const signed = await signTransaction(tx);
-      const sig = await connection.sendRawTransaction(signed.serialize(), {
-        skipPreflight: false,
-        preflightCommitment: "confirmed",
-      });
-      await connection.confirmTransaction(sig, "confirmed");
+      await submitTransaction(connection, publicKey, tx, signTransaction, action);
       toast.success(`${action} successful!`);
       await loadToken();
     } catch (err: unknown) {
@@ -175,7 +172,9 @@ export default function Dashboard() {
     const programId = tokenInfo.isToken2022 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID;
     const mint = new PublicKey(tokenInfo.address);
     const ata = getAssociatedTokenAddressSync(mint, publicKey, false, programId);
-    const amount = BigInt(Math.floor(Number(mintAmount) * 10 ** tokenInfo.decimals));
+    let amount: bigint;
+    try { amount = parseAmount(mintAmount, tokenInfo.decimals); }
+    catch (error) { toast.error(error instanceof Error ? error.message : "Invalid amount"); return; }
 
     executeAction("Mint", async () => {
       const tx = new Transaction();
@@ -196,7 +195,9 @@ export default function Dashboard() {
     const programId = tokenInfo.isToken2022 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID;
     const mint = new PublicKey(tokenInfo.address);
     const ata = getAssociatedTokenAddressSync(mint, publicKey, false, programId);
-    const amount = BigInt(Math.floor(Number(burnAmount) * 10 ** tokenInfo.decimals));
+    let amount: bigint;
+    try { amount = parseAmount(burnAmount, tokenInfo.decimals); }
+    catch (error) { toast.error(error instanceof Error ? error.message : "Invalid amount"); return; }
 
     executeAction("Burn", async () => {
       const tx = new Transaction();
@@ -299,11 +300,21 @@ export default function Dashboard() {
 
     setActionLoading("Update Metadata");
     try {
+      const upload = async (file: File) => {
+        const data = new FormData(); data.append("file", file);
+        const response = await fetch("/api/upload", { method: "POST", body: data });
+        const result = await response.json();
+        if (!response.ok || !result.url) throw new Error(result.error || "Image upload failed");
+        return result.url as string;
+      };
+      const metadata = { ...metaForm, image: logoFile ? await upload(logoFile) : metaForm.image,
+        banner: bannerFile ? await upload(bannerFile) : metaForm.banner };
+      setMetaForm(metadata); setLogoFile(null); setBannerFile(null);
       const signature = await updateTokenMetadata(
         connection,
         publicKey,
         tokenInfo.address,
-        metaForm,
+        metadata,
         tokenInfo.isToken2022,
         signTransaction
       );
@@ -374,7 +385,7 @@ export default function Dashboard() {
         <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/5 p-4 flex gap-3 mb-6 fade-up">
           <AlertTriangle className="w-5 h-5 text-yellow-400 flex-shrink-0" />
           <p className="text-sm text-yellow-200/90">
-            Connect your wallet to load and manage tokens.
+            Connect your wallet to load and manage tokens. <button className="primary-action" onClick={() => setVisible(true)}>Connect wallet</button>
           </p>
         </div>
       )}
@@ -515,6 +526,7 @@ export default function Dashboard() {
 
                 <div className="flex flex-col md:flex-row gap-5 md:items-start">
                   <ImageUpload
+                    onFileChange={setLogoFile}
                     label="Token logo *"
                     value={metaForm.image}
                     onChange={(v) => updateMeta("image", v)}
@@ -522,6 +534,7 @@ export default function Dashboard() {
                   />
                   <div className="flex-1 min-w-0">
                     <ImageUpload
+                      onFileChange={setBannerFile}
                       label="Banner"
                       value={metaForm.banner || ""}
                       onChange={(v) => updateMeta("banner", v)}

@@ -1,43 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-
+import { PublicKey } from "@solana/web3.js";
+import { pin, StorageError, validHttpUrl } from "@/lib/storage";
+export const maxDuration = 30;
 export async function POST(request: NextRequest) {
   try {
-    const { metadata, mint } = await request.json();
-
-    const jwt = process.env.PINATA_JWT;
-    if (!jwt) {
-      return NextResponse.json({ error: "Pinata not configured" }, { status: 500 });
-    }
-
-    // Upload metadata JSON to Pinata IPFS
-    const res = await fetch("https://api.pinata.cloud/pinning/pinJSONToIPFS", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${jwt}`,
-      },
-      body: JSON.stringify({
-        pinataContent: metadata,
-        pinataMetadata: {
-          name: `${mint}.json`,
-        },
-      }),
-    });
-
-    if (!res.ok) {
-      const err = await res.text();
-      console.error("Pinata metadata error:", err);
-      return NextResponse.json({ error: "Failed to upload metadata to IPFS" }, { status: 500 });
-    }
-
-    const data = await res.json();
-    const gateway = process.env.PINATA_GATEWAY || "gateway.pinata.cloud";
-
-    return NextResponse.json({
-      uri: `https://${gateway}/ipfs/${data.IpfsHash}`,
-    });
-  } catch (error: unknown) {
-    console.error("Metadata error:", error);
-    return NextResponse.json({ error: "Failed to save metadata" }, { status: 500 });
+    const text = await request.text();
+    if (text.length > 20000) return NextResponse.json({ error: "Metadata is too large." }, { status: 413 });
+    let body;
+    try { body = JSON.parse(text); new PublicKey(body.mint); } catch { return NextResponse.json({ error: "Provide valid metadata and a token mint." }, { status: 400 }); }
+    const { metadata, mint } = body;
+    if (!metadata || typeof metadata.name !== "string" || !metadata.name.trim() || Buffer.byteLength(metadata.name) > 32 || typeof metadata.symbol !== "string" || !metadata.symbol.trim() || Buffer.byteLength(metadata.symbol) > 10 || !validHttpUrl(metadata.image) || typeof metadata.description !== "string" || metadata.description.length > 5000)
+      return NextResponse.json({ error: "Check the token name, symbol, image URL and description." }, { status: 400 });
+    if (metadata.banner && !validHttpUrl(metadata.banner)) return NextResponse.json({ error: "Upload the banner before saving metadata." }, { status: 400 });
+    return NextResponse.json({ uri: await pin("pinJSONToIPFS", JSON.stringify({ pinataContent: metadata, pinataMetadata: { name: `${mint}.json` } })) });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof StorageError ? error.message : "Metadata could not be saved. Please try again." }, { status: 503 });
   }
 }
