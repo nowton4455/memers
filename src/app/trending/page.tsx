@@ -108,8 +108,8 @@ export default function Trending() {
         </div>
       </div>
       <p className="status-note" style={{ marginBottom: 16, fontSize: 12 }}>
-        Live DEX Screener data. Trending ranks recent profiles by buys in the
-        last hour; New ranks them by pool creation time.
+        Live DEX Screener data from recent profiles and active Raydium pools.
+        Trending ranks by buys in the last hour; New ranks by pool creation time.
       </p>
       {error ? (
         <p role="alert" className="pools-error">
@@ -153,7 +153,7 @@ export default function Trending() {
                 {coin.description.slice(0, 140)}
               </p>
               <p className="coin-buys">
-                ◷ Last buy: {coin.buys.toLocaleString()} buys/1h
+                ◷ Activity: {coin.buys.toLocaleString()} buys/1h
               </p>
               <div className="coin-bottom">
                 <div className="coin-links">
