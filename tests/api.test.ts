@@ -26,3 +26,15 @@ test("RPC refuses foreign origins and arbitrary methods",async()=>{
  assert.equal((await rpc(new NextRequest("https://test.invalid/api/rpc",{method:"POST",headers:{origin:"https://attacker.invalid"},body:"{}"}))).status,403);
  assert.equal((await rpc(new NextRequest("https://test.invalid/api/rpc",{method:"POST",body:JSON.stringify({jsonrpc:"2.0",method:"requestAirdrop"})}))).status,400);
 });
+test("Raydium discovery keeps the default listing functional when recent profiles are empty",async()=>{
+ const { GET } = await import("../src/app/api/trending/route");
+ const original = globalThis.fetch;
+ const token = "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R";
+ globalThis.fetch = async (input) => {
+  const url=String(input);
+  const data = url.includes("token-profiles") ? [] : url.includes("raydium.io") ? {data:{data:[{mintA:{address:mint},mintB:{address:token}}]}} : [{dexId:"raydium",baseToken:{address:token,name:"RAY",symbol:"RAY"},url:"https://dexscreener.com/solana/example",txns:{h1:{buys:12}}}];
+  return new Response(JSON.stringify(data),{status:200});
+ };
+ try { const response = await GET(new NextRequest("https://test.invalid/api/trending?platform=raydium")); assert.equal(response.status,200);const data=await response.json();assert.equal(data.tokens.length,1);assert.equal(data.tokens[0].mint,token);assert.equal(data.tokens[0].buys,12); }
+ finally {globalThis.fetch=original;}
+});

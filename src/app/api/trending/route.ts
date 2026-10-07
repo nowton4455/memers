@@ -20,30 +20,29 @@ export async function GET(req: NextRequest) {
   try {
     const isNew = req.nextUrl.searchParams.get("tab") === "new";
     const platform = req.nextUrl.searchParams.get("platform");
-    const response = await fetch(
-      "https://api.dexscreener.com/token-profiles/latest/v1",
-      { next: { revalidate: 60 }, signal: AbortSignal.timeout(10000) },
-    );
-    if (!response.ok) throw new Error("Token data unavailable");
-    const profiles: Profile[] = await response.json();
-    const solana = profiles
-      .filter(
-        (p) =>
-          p.chainId === "solana" &&
-          /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(p.tokenAddress),
-      )
-      .slice(0, 30);
-    if (!solana.length)
-      return NextResponse.json({ tokens: [], source: "DEX Screener" });
-    const pairsResponse = await fetch(
-      "https://api.dexscreener.com/tokens/v1/solana/" +
-        solana.map((p) => p.tokenAddress).join(","),
-      { next: { revalidate: 60 }, signal: AbortSignal.timeout(10000) },
-    );
-    if (!pairsResponse.ok) throw new Error("Market data unavailable");
-    const pairs: Pair[] = await pairsResponse.json();
+    const options = { next: { revalidate: 60 }, signal: AbortSignal.timeout(10000) };
+    const sources = await Promise.allSettled([
+      fetch("https://api.dexscreener.com/token-profiles/latest/v1", options).then(async r => { if(!r.ok) throw new Error("Profiles unavailable"); return await r.json() as Profile[]; }),
+      fetch("https://api-v3.raydium.io/pools/info/list?poolType=all&poolSortField=volume24h&sortType=desc&pageSize=20&page=1", options).then(async r => {
+        if(!r.ok) throw new Error("Pool discovery unavailable");
+        const data = await r.json() as { data?: { data?: { mintA: { address: string; logoURI?: string }; mintB: { address: string; logoURI?: string } }[] } };
+        return (data.data?.data || []).flatMap(p => [p.mintA,p.mintB]).map(m => ({ chainId: "solana", tokenAddress: m.address, icon: m.logoURI }));
+      }),
+    ]);
+    const profiles: Profile[] = sources.flatMap(r => r.status === "fulfilled" && Array.isArray(r.value) ? r.value : []);
+    if(sources.every(r => r.status === "rejected")) throw new Error("Token discovery unavailable");
+    const excluded = new Set(["So11111111111111111111111111111111111111112", "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"]);
+    const unique = new Map<string,Profile>();
+    for(const profile of profiles) if(profile.chainId === "solana" && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(profile.tokenAddress) && !excluded.has(profile.tokenAddress) && !unique.has(profile.tokenAddress)) unique.set(profile.tokenAddress,profile);
+    const solana = [...unique.values()].slice(0,60);
+    if (!solana.length) return NextResponse.json({ tokens: [], source: "DEX Screener / Raydium" });
+    const batches = [solana.slice(0,30),solana.slice(30)].filter(batch => batch.length);
+    const pairResponses = await Promise.allSettled(batches.map(batch => fetch("https://api.dexscreener.com/tokens/v1/solana/" + batch.map(p => p.tokenAddress).join(","), { next: { revalidate: 60 }, signal: AbortSignal.timeout(10000) }).then(async r => { if(!r.ok) throw new Error("Market data unavailable"); return await r.json() as Pair[]; })));
+    if(pairResponses.every(r => r.status === "rejected")) throw new Error("Market data unavailable");
+    const pairs: Pair[] = pairResponses.flatMap(r => r.status === "fulfilled" && Array.isArray(r.value) ? r.value : []);
     const best = new Map<string, Pair>();
     for (const p of pairs) {
+      if (!p.baseToken || !unique.has(p.baseToken.address) || !/^https:\/\//.test(p.url)) continue;
       if (platform === "raydium" && p.dexId !== "raydium") continue;
       if (platform === "pumpfun" && !p.dexId.startsWith("pump")) continue;
       const old = best.get(p.baseToken.address);
@@ -73,7 +72,7 @@ export async function GET(req: NextRequest) {
       }));
     return NextResponse.json({
       tokens,
-      source: "DEX Screener",
+      source: "DEX Screener / Raydium",
       updatedAt: new Date().toISOString(),
     });
   } catch {

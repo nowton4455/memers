@@ -93,6 +93,13 @@ export default function Home() {
     window.addEventListener("memers-confirmed", confirmed);
     return () => window.removeEventListener("memers-confirmed", confirmed);
   }, [publicKey, connection]);
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch("/api/health", { cache: "no-store", signal: controller.signal })
+      .then(async response => { const status = await response.json(); if (!response.ok || !status.ready) setStorageError(status.message || "Token storage is unavailable."); })
+      .catch(() => { if(!controller.signal.aborted) setStorageError("Could not check token storage. The launch will check again before requesting a wallet signature."); });
+    return () => controller.abort();
+  }, []);
   const canNext = useMemo(() => {
     if (step === 1)
       return Boolean(form.name.trim() && form.symbol.trim() && form.image && new TextEncoder().encode(form.name.trim()).length <= 32 && new TextEncoder().encode(form.symbol.trim()).length <= 10);
