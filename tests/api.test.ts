@@ -35,6 +35,6 @@ test("Raydium discovery keeps the default listing functional when recent profile
   const data = url.includes("token-profiles") ? [] : url.includes("raydium.io") ? {data:{data:[{mintA:{address:mint},mintB:{address:token}}]}} : [{dexId:"raydium",baseToken:{address:token,name:"RAY",symbol:"RAY"},url:"https://dexscreener.com/solana/example",txns:{h1:{buys:12}}}];
   return new Response(JSON.stringify(data),{status:200});
  };
- try { const response = await GET(new NextRequest("https://test.invalid/api/trending?platform=raydium")); assert.equal(response.status,200);const data=await response.json();assert.equal(data.tokens.length,1);assert.equal(data.tokens[0].mint,token);assert.equal(data.tokens[0].buys,12); }
+ try { const response = await GET(new NextRequest("https://test.invalid/api/trending?platform=raydium")); assert.equal(response.status,200);const data=await response.json();assert.equal(data.tokens.length,1);assert.equal(data.tokens[0].mint,token);assert.equal(data.tokens[0].buys,12);assert.equal(data.tokens[0].launchUrl, ""); }
  finally {globalThis.fetch=original;}
 });

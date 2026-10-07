@@ -69,6 +69,7 @@ export async function GET(req: NextRequest) {
         marketCap: p.marketCap || p.fdv || 0,
         buys: p.txns?.h1?.buys || 0,
         url: p.url,
+        launchUrl: p.dexId === "pumpfun" ? `https://pump.fun/coin/${p.baseToken.address}` : "",
       }));
     return NextResponse.json({
       tokens,

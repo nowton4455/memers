@@ -12,6 +12,7 @@ type Coin = {
   marketCap: number;
   buys: number;
   url: string;
+  launchUrl?: string;
 };
 const money = (n: number) =>
   new Intl.NumberFormat("en-US", {
@@ -157,14 +158,14 @@ export default function Trending() {
               </p>
               <div className="coin-bottom">
                 <div className="coin-links">
-                  <a
-                    href={`https://pump.fun/coin/${coin.mint}`}
+                  {coin.launchUrl && <a
+                    href={coin.launchUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Pump.fun"
                   >
                     💊
-                  </a>
+                  </a>}
                   <a
                     href={coin.url}
                     target="_blank"
