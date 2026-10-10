@@ -2,7 +2,8 @@ import { list, put } from "@vercel/blob";
 import { randomUUID } from "node:crypto";
 export class StorageError extends Error {}
 function blobConfigured() {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN || (process.env.BLOB_STORE_ID && process.env.VERCEL_OIDC_TOKEN));
+  // The Blob SDK also reads OIDC from Vercel's request context at runtime.
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
 }
 export async function storageReady() {
   try {

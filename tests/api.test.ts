@@ -50,6 +50,17 @@ test("Blob readiness, image upload and metadata publish use real public URLs",as
   assert.equal(saved.length,2);
  } finally {setGlobalDispatcher(originalDispatcher); await agent.close(); if(originalToken === undefined) delete process.env.BLOB_READ_WRITE_TOKEN; else process.env.BLOB_READ_WRITE_TOKEN=originalToken;}
 });
+test("Vercel request-context OIDC works without an OIDC environment variable",async()=>{
+ const key=Symbol.for("@vercel/request-context"), context=globalThis as unknown as Record<symbol,unknown>;
+ const originalContext=context[key], keys=["BLOB_STORE_ID","BLOB_READ_WRITE_TOKEN","VERCEL_OIDC_TOKEN"], values=keys.map(k=>process.env[k]);
+ const dispatcher=getGlobalDispatcher(), agent=new MockAgent();agent.disableNetConnect();setGlobalDispatcher(agent);
+ const token=`${Buffer.from('{"alg":"RS256"}').toString('base64url')}.${Buffer.from(JSON.stringify({exp:Math.floor(Date.now()/1000)+3600})).toString('base64url')}.test-signature`;
+ context[key]={get:()=>({headers:{"x-vercel-oidc-token":token}})};
+ process.env.BLOB_STORE_ID="store_test";delete process.env.BLOB_READ_WRITE_TOKEN;delete process.env.VERCEL_OIDC_TOKEN;
+ agent.get("https://vercel.com").intercept({path:/^\/api\/blob/,method:"GET",headers:{authorization:`Bearer ${token}`,"x-vercel-blob-store-id":"test"}}).reply(200,{blobs:[],hasMore:false});
+ try { assert.equal((await health()).status,200); }
+ finally {context[key]=originalContext;keys.forEach((k,i)=>{if(values[i] === undefined) delete process.env[k];else process.env[k]=values[i];});setGlobalDispatcher(dispatcher);await agent.close();}
+});
 test("RPC refuses foreign origins and arbitrary methods",async()=>{
  assert.equal((await rpc(new NextRequest("https://test.invalid/api/rpc",{method:"POST",headers:{origin:"https://attacker.invalid"},body:"{}"}))).status,403);
  assert.equal((await rpc(new NextRequest("https://test.invalid/api/rpc",{method:"POST",body:JSON.stringify({jsonrpc:"2.0",method:"requestAirdrop"})}))).status,400);
