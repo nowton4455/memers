@@ -16,7 +16,7 @@ export default function Navbar() {
   return (
     <>
       <div className="promo-bar">
-        CREATE COIN: 0.2 SOL • OPTIONAL AUTHORITY REVOCATIONS: 0.1 SOL EACH
+        ⚠️ LAST CHANCE: 0.1 SOL CREATE COIN FEE (BACK TO 0.2 SOL IN 24H)
       </div>
       <nav className="launch-nav" aria-label="Main navigation">
         <div className="nav-inner">
