@@ -21,8 +21,8 @@ export default function Navbar() {
       <nav className="launch-nav" aria-label="Main navigation">
         <div className="nav-inner">
           <Link href="/" className="brand">
-            <img src="/memers-logo.svg" width={28} height={28} alt="" className="brand-mark" />
-            <span>Memers</span>
+            <img src="/launch-meme-logo.png" width={28} height={28} alt="" className="brand-mark" />
+            <span>Launch Meme</span>
           </Link>
           <button
             className="mobile-toggle"

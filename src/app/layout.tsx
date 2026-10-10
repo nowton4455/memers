@@ -7,13 +7,13 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Memers — Create Solana Tokens Fast",
-    template: "%s | Memers",
+    default: "Launch Meme | Create Solana Tokens Fast — No Code",
+    template: "%s | Launch Meme",
   },
   description:
     "Create a Solana token from a simple no-code interface. Configure metadata, supply and token authorities from your own wallet.",
   robots: { index: true, follow: true },
-  icons: { icon: "/memers-logo.svg", apple: "/memers-logo.svg" },
+  icons: { icon: "/launch-meme-logo.png", apple: "/launch-meme-logo.png" },
 };
 
 export default function RootLayout({
@@ -32,7 +32,7 @@ export default function RootLayout({
           <footer className="site-footer">
             <div className="footer-inner">
               <p className="footer-disclaimer">
-                Memers is a non-custodial software interface that allows users
+                Launch Meme is a non-custodial software interface that allows users
                 to interact with public smart contracts on the Solana
                 blockchain. We do not custody funds, execute transactions,
                 provide financial advice, or guarantee outcomes. All actions are
@@ -42,7 +42,7 @@ export default function RootLayout({
               </p>
               <div className="footer-bottom">
                 <span>
-                  © {new Date().getFullYear()} Memers | All Rights Reserved
+                  © {new Date().getFullYear()} Launch Meme | All Rights Reserved
                 </span>
                 <div className="footer-links">
                   <a href="/learn">Learn</a>

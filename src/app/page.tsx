@@ -491,7 +491,7 @@ export default function Home() {
           <div className="faq-list">
             {[
               [
-                "What is Memers?",
+                "What is Launch Meme?",
                 "Create Solana tokens from a form using your own wallet. Choose a name, symbol, image, supply and token authorities.",
               ],
               [
