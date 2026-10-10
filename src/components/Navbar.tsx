@@ -21,7 +21,7 @@ export default function Navbar() {
       <nav className="launch-nav" aria-label="Main navigation">
         <div className="nav-inner">
           <Link href="/" className="brand">
-            <Coins size={28} className="brand-mark" />
+            <img src="/memers-logo.svg" width={28} height={28} alt="" className="brand-mark" />
             <span>Memers</span>
           </Link>
           <button

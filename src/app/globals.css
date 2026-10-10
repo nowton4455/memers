@@ -207,7 +207,7 @@ summary:focus-visible {
   justify-content: center;
   align-items: center;
   margin: 0 auto 24px;
-  gap: 8px;
+  gap: 16px;
 }
 .step-wrap {
   display: flex;
@@ -254,6 +254,9 @@ summary:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+.form-grid.two label {
+  gap: 12px;
 }
 .form-grid label > span,
 .full-label > span,
@@ -511,24 +514,36 @@ summary:focus-visible {
   list-style: decimal inside;
 }
 .how-card li {
-  font-size: 15px;
+  font-size: 14px;
   margin: 12px 0;
 }
 .faq-section {
   max-width: 720px;
   padding: 0 16px;
-  margin: 48px auto;
+  margin: 96px auto 48px;
+}
+.faq-card {
+  padding: 24px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.faq-list {
+  display: grid;
+  gap: 12px;
 }
 .faq-list details {
-  border-bottom: 1px solid #333336;
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }
 .faq-list summary {
-  padding: 16px 0;
+  padding: 16px;
   list-style: none;
   display: flex;
   justify-content: space-between;
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 400;
+  gap: 12px;
 }
 .faq-list summary::after {
   content: "⌄";
@@ -540,7 +555,7 @@ summary:focus-visible {
 .faq-list p {
   font-size: 14px;
   color: #a1a1aa;
-  padding: 0 0 16px;
+  padding: 0 16px 16px;
   line-height: 1.7;
 }
 .site-footer {
@@ -1022,6 +1037,17 @@ summary:focus-visible {
   }
   .launch-shell {
     padding: 24px 16px;
+  }
+  .launch-hero h1 {
+    white-space: normal;
+    font-size: clamp(24px, 6vw, 40px);
+    line-height: 1.25;
+  }
+  .form-grid.two, .social-grid {
+    grid-template-columns: 1fr;
+  }
+  .faq-card {
+    padding: 20px;
   }
   .launch-hero p {
     font-size: 14px;

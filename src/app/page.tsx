@@ -486,63 +486,65 @@ export default function Home() {
         </div>
       </section>
       <section className="faq-section" id="faq">
-        <h2>Frequently Asked Questions</h2>
-        <div className="faq-list">
-          {[
-            [
-              "What is Memers?",
-              "Create Solana tokens from a form using your own wallet. Choose a name, symbol, image, supply and token authorities.",
-            ],
-            [
-              "How do I create a token?",
-              "Connect a supported wallet, complete the three steps, then approve the creation transaction in your wallet.",
-            ],
-            [
-              "Are there any fees?",
-              "Solana network fees and account rent apply. Your wallet shows the transaction before you approve it.",
-            ],
-            [
-              "How does liquidity management work on our platform?",
-              "Select Raydium or Meteora to view wallet tokens. Create a token/SOL pool from your wallet, then add or remove liquidity from supported Raydium CPMM and Meteora DAMM V2 positions. Both assets and network fees are required.",
-            ],
-            [
-              "What is Solana, and why should I launch my token on it?",
-              "Solana is a public blockchain with an ecosystem of wallets, tokens and decentralised exchanges.",
-            ],
-            [
-              "How can I create a token on the Solana blockchain?",
-              "Complete the creator form and sign the transaction. The supply is minted to your connected wallet.",
-            ],
-            [
-              "What are the steps to deploy my own token on Solana?",
-              "Choose your token details, supply, description and optional social links. Review authorities and approve creation.",
-            ],
-            [
-              "How much does it cost to create a Solana token?",
-              "The final network cost depends on account rent and transaction fees. Check your wallet before approving.",
-            ],
-            [
-              "What's the difference between SPL tokens and other token standards?",
-              "SPL is Solana's token standard. Other blockchains have their own token programs and standards.",
-            ],
-            [
-              "Can I edit my token after creation?",
-              "Metadata can be changed only while you retain its update authority. Making metadata immutable is permanent.",
-            ],
-            [
-              "Where can my token be traded after creation?",
-              "Creation alone does not create a market. You must add liquidity to an exchange separately.",
-            ],
-            [
-              "Is it safe to create tokens using this platform?",
-              "The wallet signs transactions. Review instructions and amounts before approving, and keep your recovery phrase private.",
-            ],
-          ].map(([q, a]) => (
-            <details key={q}>
-              <summary>{q}</summary>
-              <p>{a}</p>
-            </details>
-          ))}
+        <div className="faq-card">
+          <h2>Frequently Asked Questions</h2>
+          <div className="faq-list">
+            {[
+              [
+                "What is Memers?",
+                "Create Solana tokens from a form using your own wallet. Choose a name, symbol, image, supply and token authorities.",
+              ],
+              [
+                "How do I create a token?",
+                "Connect a supported wallet, complete the three steps, then approve the creation transaction in your wallet.",
+              ],
+              [
+                "Are there any fees?",
+                "Solana network fees and account rent apply. Your wallet shows the transaction before you approve it.",
+              ],
+              [
+                "How does liquidity management work on our platform?",
+                "Select Raydium or Meteora to view wallet tokens. Create a token/SOL pool from your wallet, then add or remove liquidity from supported Raydium CPMM and Meteora DAMM V2 positions. Both assets and network fees are required.",
+              ],
+              [
+                "What is Solana, and why should I launch my token on it?",
+                "Solana is a public blockchain with an ecosystem of wallets, tokens and decentralised exchanges.",
+              ],
+              [
+                "How can I create a token on the Solana blockchain?",
+                "Complete the creator form and sign the transaction. The supply is minted to your connected wallet.",
+              ],
+              [
+                "What are the steps to deploy my own token on Solana?",
+                "Choose your token details, supply, description and optional social links. Review authorities and approve creation.",
+              ],
+              [
+                "How much does it cost to create a Solana token?",
+                "The final network cost depends on account rent and transaction fees. Check your wallet before approving.",
+              ],
+              [
+                "What's the difference between SPL tokens and other token standards?",
+                "SPL is Solana's token standard. Other blockchains have their own token programs and standards.",
+              ],
+              [
+                "Can I edit my token after creation?",
+                "Metadata can be changed only while you retain its update authority. Making metadata immutable is permanent.",
+              ],
+              [
+                "Where can my token be traded after creation?",
+                "Creation alone does not create a market. You must add liquidity to an exchange separately.",
+              ],
+              [
+                "Is it safe to create tokens using this platform?",
+                "The wallet signs transactions. Review instructions and amounts before approving, and keep your recovery phrase private.",
+              ],
+            ].map(([q, a]) => (
+              <details key={q}>
+                <summary>{q}</summary>
+                <p>{a}</p>
+              </details>
+            ))}
+          </div>
         </div>
       </section>
     </>

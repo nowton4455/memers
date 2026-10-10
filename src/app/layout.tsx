@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   description:
     "Create a Solana token from a simple no-code interface. Configure metadata, supply and token authorities from your own wallet.",
   robots: { index: true, follow: true },
+  icons: { icon: "/memers-logo.svg", apple: "/memers-logo.svg" },
 };
 
 export default function RootLayout({
