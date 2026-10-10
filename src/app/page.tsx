@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import ImageUpload from "@/components/ImageUpload";
 import { createToken, TokenConfig } from "@/lib/token";
+import { PLATFORM_RECEIVING_WALLET, platformFeeSol } from "@/lib/fees";
 import { assertNoPending, PendingTransaction } from "@/lib/transaction";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
@@ -432,6 +433,15 @@ export default function Home() {
             </div>
           )}
 
+          <div className="fee-summary" aria-live="polite">
+            <div><span>Launch fee</span><strong>0.2 SOL</strong></div>
+            {form.revokeFreezeAuthority && <div><span>Revoke Freeze</span><strong>0.1 SOL</strong></div>}
+            {form.revokeMintAuthority && <div><span>Revoke Mint</span><strong>0.1 SOL</strong></div>}
+            {form.revokeUpdateAuthority && <div><span>Revoke Update</span><strong>0.1 SOL</strong></div>}
+            <div className="fee-total"><span>Platform total</span><strong>{platformFeeSol(form)} SOL</strong></div>
+            <p>Solana network fees and account rent are additional. The platform fee and token creation are approved together in your wallet.</p>
+            <details><summary>Receiving wallet</summary><code>{PLATFORM_RECEIVING_WALLET}</code></details>
+          </div>
           <div className="wizard-actions">
             {step > 1 && (
               <button
@@ -457,7 +467,7 @@ export default function Home() {
                 disabled={loading}
                 onClick={() => connected ? void launch() : setWalletVisible(true)}
               >
-                {loading ? "Creating Token..." : connected ? "Create Token" : "Connect Wallet to Create"}{" "}
+                {loading ? "Creating Token..." : connected ? `Create Token · ${platformFeeSol(form)} SOL` : "Connect Wallet to Create"}{" "}
                 {!loading && <Rocket size={17} />}
               </button>
             )}
@@ -500,7 +510,7 @@ export default function Home() {
               ],
               [
                 "Are there any fees?",
-                "Solana network fees and account rent apply. Your wallet shows the transaction before you approve it.",
+                "The launch fee is 0.2 SOL, plus 0.1 SOL each for Revoke Mint, Revoke Freeze and Revoke Update. Network fees and account rent are additional. Your wallet approves the platform fee and token creation together.",
               ],
               [
                 "How does liquidity management work on our platform?",
@@ -520,7 +530,7 @@ export default function Home() {
               ],
               [
                 "How much does it cost to create a Solana token?",
-                "The final network cost depends on account rent and transaction fees. Check your wallet before approving.",
+                "The platform fee ranges from 0.2 SOL to 0.5 SOL depending on the three optional authority revocations. Network fees and account rent are additional.",
               ],
               [
                 "What's the difference between SPL tokens and other token standards?",
@@ -597,6 +607,7 @@ function AuthorityCard({
     >
       <div>
         <strong>{title}</strong>
+        <span className="authority-price">+0.1 SOL</span>
         <p>{description}</p>
         <span className="authority-select">
           {checked ? "Selected" : "Select"}

@@ -16,7 +16,7 @@ export default function Navbar() {
   return (
     <>
       <div className="promo-bar">
-        CREATE YOUR SOLANA TOKEN • CONNECT YOUR WALLET TO GET STARTED
+        CREATE COIN: 0.2 SOL • OPTIONAL AUTHORITY REVOCATIONS: 0.1 SOL EACH
       </div>
       <nav className="launch-nav" aria-label="Main navigation">
         <div className="nav-inner">

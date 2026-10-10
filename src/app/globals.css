@@ -1105,3 +1105,11 @@ summary:focus-visible {
 .pool-details label { display: block; margin: 16px 0 8px; }
 .pool-details .field { width: 100%; }
 .primary-action:disabled { opacity: .5; cursor: not-allowed; }
+
+.fee-summary { margin-top: 24px; padding: 16px; background: #262626; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; }
+.fee-summary > div { display: flex; justify-content: space-between; gap: 16px; padding: 4px 0; }
+.fee-total { border-top: 1px solid #404040; margin-top: 8px; padding-top: 12px !important; }
+.fee-summary p { font-size: 12px; color: var(--muted); margin: 12px 0; }
+.fee-summary summary { color: var(--muted); font-size: 12px; }
+.fee-summary code { display: block; overflow-wrap: anywhere; font-size: 12px; margin-top: 8px; }
+.authority-price { display: block; color: #c4b5fd; font-size: 14px; margin-bottom: 8px; }

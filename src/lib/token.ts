@@ -1,4 +1,5 @@
 import { Buffer } from "buffer";
+import { platformFeeInstruction } from "./fees";
 import { submitTransaction, assertNoPending } from "./transaction";
 import {
   Connection,
@@ -34,6 +35,7 @@ import {
 import {
   createInitializeInstruction,
   createUpdateFieldInstruction,
+  createUpdateAuthorityInstruction,
   pack,
   TokenMetadata,
 } from "@solana/spl-token-metadata";
@@ -357,6 +359,8 @@ async function createStandardToken(
     );
   }
 
+  tx.add(platformFeeInstruction(payer, config));
+
   const signature = await submitTransaction(connection, payer, tx, signTransaction, "Create token", [mintKeypair], { mint: mint.toBase58(), tokenAccount: ata.toBase58(), metadataUri });
 
   return {
@@ -499,6 +503,16 @@ async function createTaxToken(
       ),
     );
   }
+
+  if (config.revokeUpdateAuthority) {
+    tx.add(createUpdateAuthorityInstruction({
+      programId: TOKEN_2022_PROGRAM_ID, metadata: mint,
+      oldAuthority: payer, newAuthority: null,
+    }));
+    tx.add(createSetAuthorityInstruction(mint, payer, AuthorityType.MetadataPointer, null, [], TOKEN_2022_PROGRAM_ID));
+  }
+
+  tx.add(platformFeeInstruction(payer, config));
 
   const signature = await submitTransaction(connection, payer, tx, signTransaction, "Create token", [mintKeypair], { mint: mint.toBase58(), tokenAccount: ata.toBase58(), metadataUri });
 
