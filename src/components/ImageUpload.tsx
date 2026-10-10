@@ -40,9 +40,9 @@ export default function ImageUpload({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: { "image/png": [".png"], "image/jpeg": [".jpg", ".jpeg"] },
-    maxSize: 5 * 1024 * 1024,
+    maxSize: 4 * 1024 * 1024,
     maxFiles: 1,
-    onDropRejected: () => toast.error("Choose one PNG or JPG image under 5MB."),
+    onDropRejected: () => toast.error("Choose one PNG or JPG image under 4MB."),
   });
   const remove = () => {
     if (preview.current) URL.revokeObjectURL(preview.current);
@@ -83,7 +83,7 @@ export default function ImageUpload({
               <UploadCloud size={24} />
             </div>
             <p>Click to upload or drag and drop</p>
-            <small>PNG or JPG. Max 5MB.</small>
+            <small>PNG or JPG. Max 4MB.</small>
           </>
         )}
       </div>

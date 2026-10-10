@@ -16,7 +16,7 @@ export default function Learn() {
             ["Token Symbol", "Choose a ticker of up to eight characters."],
             [
               "Token Image",
-              "Select a PNG or JPG under 5MB. Check the preview, then choose Next.",
+              "Select a PNG or JPG under 4MB. Check the preview, then choose Next.",
             ],
           ],
         ],
